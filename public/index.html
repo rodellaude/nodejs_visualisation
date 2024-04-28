@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and Scatter Plot</title>
+</head>
+<body>
+    <h1>Upload a file and process scatter plot</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput">
+        <button type="button" onclick="uploadFile()">Upload</button>
+    </form>
+    <button type="button" onclick="processScatterPlot()">Process Scatter Plot</button>
+    <div id="plotContainer"></div>
+
+    <script>
+        async function uploadFile() {
+            const formData = new FormData();
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            // Check if a file is selected
+            if (!file) {
+                alert('No file selected. Please choose a file to upload.'); // Display no file selected message
+                return;
+            }
+            
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to upload file.');
+                }
+
+                const data = await response.json();
+                alert(data.message); // Display success message from server
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('Error uploading file. Please try again.');
+            }
+        }
+
+        async function processScatterPlot() {
+            try {
+                const response = await fetch('/process-scatter-plot', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to process scatter plot.');
+                }
+
+                const plotData = await response.json();
+                // Display scatter plot using plotData
+                console.log('Scatter plot data:', plotData);
+            } catch (error) {
+                console.error('Error processing scatter plot:', error);
+                alert('Error processing scatter plot. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
