@@ -1,104 +1,93 @@
-import express from 'express';
-import path from 'path';
-import morgan from 'morgan';
-import fs from 'fs';
-import { createLogger, transports, format } from 'winston';
-import { handleFileUpload } from './utilities/utils.js';
-import { createScatterPlot } from './charts/scatter_plot.js';
+const express = require('express');
+const formidable = require('formidable');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 4000;
 
-// Logging configuration
-const logger = createLogger({
-    level: 'info',
-    format: format.combine(
-        format.timestamp(),
-        format.simple()
-    ),
-    transports: [
-        new transports.File({ filename: 'log/combined.log', level: 'info' }),
-        new transports.File({ filename: 'log/error.log', level: 'error' })
-    ]
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
-// If we're not in production, log to the console as well
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new transports.Console({
-        format: format.combine(
-            format.colorize(),
-            format.simple()
-        )
-    }));
-}
-
-// Serve static files (HTML, CSS, JavaScript, etc.)
-app.use(express.static('public'));
-
-const __dirname = path.dirname(new URL(import.meta.url).pathname); // Get the directory name from the module's URL
-const logDirectory = path.join(__dirname.substring(1), 'log'); // Define the log directory
-
-fs.mkdirSync(logDirectory, { recursive: true }); // Ensure the log directory exists
-
-const logFilePath = path.join(logDirectory, 'access.log'); // Use __dirname and log directory to construct the log file path
-const accessLogStream = fs.createWriteStream(logFilePath, { flags: 'a' }); // Create a write stream for logging
-
-app.use(morgan('combined', { stream: accessLogStream })); // Use morgan middleware with the accessLogStream
-
-// Route for serving the index.html file
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Route for handling file upload
-app.post('/upload', async (req, res, next) => {
+app.post('/upload', (req, res) => {
     try {
-        // Call the handleFileUpload middleware
-        await handleFileUpload(req, res, next);
-        
-        // If handleFileUpload is successful, continue processing
-        // Get uploaded file information
-        // const file = req.file;
-        // if (!file) {
-        //     const noFileMessage = 'No file uploaded.';
-        //     return res.status(400).send({ message: noFileMessage });
-        // }
+        const form = new formidable.IncomingForm({
+            uploadDir: './uploads', // Specify the directory to upload files
+            keepExtensions: true,    // Keep file extensions
+            multiples: false         // Allow multiple files to be uploaded
+        });
 
-        // File uploaded successfully, continue processing...
-    } catch (error) {
-        logger.error(error); // Log error
-        // res.status(400).send(error.message);
+        // Set the default temporary directory for file uploads
+        form.uploadDir = path.join(__dirname, 'uploads');
+        console.log(form.uploadDir);
+
+        form.parse(req, (err, fields, files) => {
+            try {
+                if (err) {
+                    console.error('Error parsing form:', err);
+                    return res.status(500).send('Internal Server Error');
+                }
+                // Check if file is uploaded successfully
+                const fileKeys = Object.keys(files);
+                // console.log('files:', files);
+                if (fileKeys.length === 0) {
+                    console.error('No file uploaded');
+                    res.writeHead(400, { 'Content-Type': 'text/plain' });
+                    res.end('No file uploaded');
+                    return;
+                }
+                const file = files['file'][0];
+                const originalFilename = file.originalFilename;
+                var newFilename = file.newFilename;
+                const oldPath = file.filepath;
+                const newPath = path.join(path.dirname(oldPath), originalFilename);
+
+                fs.rename(oldPath, newPath, function(err) {
+                    if (err) {
+                        console.error('Error renaming file:', err);
+                        // Handle error
+                    } else {
+                        // Update the newFilename property
+                        newFilename = originalFilename;
+                        // Now newFilename matches originalFilename
+                        console.log('File uploaded successfully');
+                        // res.writeHead(200, { 'Content-Type': 'text/plain' });
+                        // res.write('File uploaded successfully');
+                        // res.end();
+                        // Read the contents of the uploads directory
+                        fs.readdir(form.uploadDir, (err, files) => {
+                            if (err) {
+                                console.error('Error reading directory:', err);
+                                return res.status(500).send({ error: 'Internal Server Error' });
+                            }
+                            // Send the list of uploaded files to the client as JSON
+                            console.log(files);
+                            res.status(200).json({ files: files });
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Error processing file:', err);
+                res.status(500).send('Internal Server Error');
+            }
+        });
+    } catch (err) {
+        console.error('Error creating form:', err);
+        res.status(500).send('Internal Server Error');
     }
 });
 
-
-// Route for processing scatter plot
-app.get('/process-scatter-plot', async (req, res) => {
-    try {
-        const plotData = await createScatterPlot();
-        // Send scatter plot data as JSON response
-        res.json(plotData);
-    } catch (error) {
-        logger.error(error); // Log error
-        res.status(500).send('Error processing scatter plot.');
-    }
+// Endpoint to serve the list of files
+app.get('/files', (req, res) => {
+    const uploadDirectory = path.join(__dirname, 'uploads');
+    fs.readdir(uploadDirectory, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return res.status(500).send({ error: 'Internal Server Error' });
+        }
+        res.json({ files: files });
+    });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    logger.error(err); // Log error
-
-    // Check if a response has already been sent
-    if (res.headersSent) {
-        return next(err); // Pass the error to the next error handler
-    }
-    
-    res.status(500).send('Internal Server Error: ' + err.message);
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
-
-export default logger;

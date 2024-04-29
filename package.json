@@ -2,7 +2,6 @@
   "name": "visualisation",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +11,7 @@
   "description": "",
   "dependencies": {
     "express": "^4.19.2",
+    "formidable": "^3.5.1",
     "fs": "^0.0.1-security",
     "js-yaml": "^4.1.0",
     "morgan": "^1.10.0",

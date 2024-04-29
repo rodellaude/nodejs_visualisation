@@ -3,66 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload and Scatter Plot</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <title>My Charts</title>
 </head>
 <body>
-    <h1>Upload a file and process scatter plot</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" name="file" id="fileInput">
-        <button type="button" onclick="uploadFile()">Upload</button>
+    <h1>Charts</h1>
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" accept=".jtl, .csv, .txt" name="filepath" required>
+        <button type="submit">Upload</button>
     </form>
-    <button type="button" onclick="processScatterPlot()">Process Scatter Plot</button>
-    <div id="plotContainer"></div>
+    <br>
+    <div>Select a File
+        <select id="fileDropdown">
+            <option value="">Select a file</option>
+        </select>
+    </div>
 
-    <script>
-        async function uploadFile() {
-            const formData = new FormData();
+    <script>               // Call fetchFiles() function when the page loads
+        window.addEventListener('load', fetchFiles);
+        // Function to handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
 
-            // Check if a file is selected
             if (!file) {
-                alert('No file selected. Please choose a file to upload.'); // Display no file selected message
+                alert('Please select a file.');
                 return;
             }
-            
-            formData.append('file', file);
-            
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to upload file.');
-                }
 
-                const data = await response.json();
-                alert(data.message); // Display success message from server
-            } catch (error) {
-                console.error('Error uploading file:', error);
-                alert('Error uploading file. Please try again.');
+            var allowedExtensions = /(\.jtl|\.csv|\.txt)$/i;
+
+            if (!allowedExtensions.exec(fileInput.value)) {
+                alert('Invalid file type. Only JTL, CSV, and TXT files are allowed.');
+                return;
             }
+
+            const filename = file.name;
+
+            // Check if the selected file already exists in the dropdown
+            if (checkDuplicateFilename(filename)) {
+                alert('File with the same name already exists.');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert(`File "${file.name}" uploaded successfully!`); // Show success message
+                    document.getElementById('uploadForm').reset();
+                    return response.json(); // Parse JSON response
+                    // console.log(response.json); // Reset form
+                } else {
+                    response.json();
+                    alert(response.json()); // Handle upload error
+                }
+            })
+            .then(data => {
+                if (data && data.files) {
+                    // Process the list of files received from the server
+                    // console.log('List of uploaded files:', data.files);
+                    updateFileDropdown(data.files);
+                    // Here you can update the UI, for example, update a dropdown with the received file names
+                } else {
+                    throw new Error('Invalid response');
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading file:', error);
+                alert('Error uploading file. Please try again.'); // Handle fetch error
+            });
+        });
+
+        // Function to fetch the list of files from the server
+        function fetchFiles() {
+            fetch('/files') // Fetch files from the /files endpoint
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); // Parse JSON response
+                    } else {
+                        throw new Error('Failed to fetch files');
+                    }
+                })
+                .then(data => {
+                    if (data && data.files) {
+                        console.log('List of uploaded files:', data.files);
+                        // Populate the dropdown with the list of filenames
+                        updateFileDropdown(data.files);
+                    } else {
+                        throw new Error('Invalid response');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching files:', error);
+                });
+        }
+         // Function to update the dropdown with uploaded files
+         function updateFileDropdown(files) {
+            const fileDropdown = document.getElementById('fileDropdown');
+            fileDropdown.innerHTML = ''; // Clear existing options
+            console.log(files);
+            
+            // Add an option for each uploaded file
+            files.forEach(file => {
+                console.log(file);
+                const option = document.createElement('option');
+                option.text = file;
+                option.value = file;
+                fileDropdown.add(option);
+            });
         }
 
-        async function processScatterPlot() {
-            try {
-                const response = await fetch('/process-scatter-plot', {
-                    method: 'GET'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to process scatter plot.');
+        // Function to check if the selected file already exists in the dropdown
+        function checkDuplicateFilename(filename) {
+            const fileDropdown = document.getElementById('fileDropdown');
+            const options = fileDropdown.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === filename) {
+                    return true; // Duplicate filename found
                 }
-
-                const plotData = await response.json();
-                // Display scatter plot using plotData
-                console.log('Scatter plot data:', plotData);
-            } catch (error) {
-                console.error('Error processing scatter plot:', error);
-                alert('Error processing scatter plot. Please try again.');
             }
+            return false; // No duplicate filename found
         }
     </script>
 </body>
