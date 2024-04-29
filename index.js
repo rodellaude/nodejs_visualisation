@@ -2,6 +2,8 @@ const express = require('express');
 const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
+const { readJTLFile } = require('./utilities/utils.js');
+const { createScatterPlot } = require('./charts/scatter_plot.js');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -86,6 +88,26 @@ app.get('/files', (req, res) => {
         }
         res.json({ files: files });
     });
+});
+
+// Endpoint to process and serve scatter plot data
+app.get('/file/:filename', async (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, 'uploads', filename);
+    
+    try {
+        // Read and parse JTL file
+        const data = await readJTLFile(filepath);
+
+        // Process data and create scatter plot
+        const plot = await createScatterPlot(data);
+
+        // Send scatter plot data to the client
+        res.json({ plot: plot });
+    } catch (error) {
+        console.error('Error processing file:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 app.listen(PORT, () => {

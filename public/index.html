@@ -17,9 +17,12 @@
         <select id="fileDropdown">
             <option value="">Select a file</option>
         </select>
+        <button id="processFileBtn">Process File</button>
     </div>
+    <div id="plotArea"></div>
 
-    <script>               // Call fetchFiles() function when the page loads
+    <script>
+        // EVENTS          // Call fetchFiles() function when the page loads
         window.addEventListener('load', fetchFiles);
         // Function to handle form submission
         document.getElementById('uploadForm').addEventListener('submit', function(event) {
@@ -82,6 +85,38 @@
             });
         });
 
+        document.getElementById('processFileBtn').addEventListener('click', function() {
+            const fileDropdown = document.getElementById('fileDropdown');
+            const selectedFile = fileDropdown.value;
+
+            if (!selectedFile) {
+                alert('Please select a file to process.');
+                return;
+            }
+
+            fetch(`/file/${selectedFile}`)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Failed to fetch file data');
+                    }
+                })
+                .then(data => {
+                    if (data && data.plot) {
+                        displayPlot(data.plot);
+                    } else {
+                        throw new Error('Invalid response');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error processing file:', error);
+                    alert('Error processing file. Please try again.');
+                });
+        });
+
+        // FUNCTIONS
+
         // Function to fetch the list of files from the server
         function fetchFiles() {
             fetch('/files') // Fetch files from the /files endpoint
@@ -131,6 +166,15 @@
                 }
             }
             return false; // No duplicate filename found
+        }
+        
+        function displayPlot(plotData) {
+            const plotArea = document.getElementById('plotArea');
+            Plotly.newPlot(plotArea, [plotData], {
+                title: 'Scatter Plot',
+                xaxis: { title: 'X Axis' },
+                yaxis: { title: 'Y Axis' }
+            });
         }
     </script>
 </body>
