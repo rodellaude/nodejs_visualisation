@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="styles.css">
     <title>My Charts</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <h1>Charts</h1>
@@ -103,15 +104,17 @@
                     }
                 })
                 .then(data => {
-                    if (data && data.plot) {
-                        displayPlot(data.plot);
+                    if (data && data.plot && data.layout) {
+                        console.log('...STARTING TO DISPLAY PLOT');
+                        displayPlot(data.plot, data.layout);
+                        console.log('...COMPLETED TO DISPLAY PLOT');
                     } else {
                         throw new Error('Invalid response');
                     }
                 })
                 .catch(error => {
-                    console.error('Error processing file:', error);
-                    alert('Error processing file. Please try again.');
+                    console.error('CLIENT :: Error processing file:', error);
+                    alert('CLIENT :: Error processing file. Please try again.');
                 });
         });
 
@@ -168,13 +171,14 @@
             return false; // No duplicate filename found
         }
         
-        function displayPlot(plotData) {
+        function displayPlot(plotData, plotLayout) {
             const plotArea = document.getElementById('plotArea');
-            Plotly.newPlot(plotArea, [plotData], {
-                title: 'Scatter Plot',
-                xaxis: { title: 'X Axis' },
-                yaxis: { title: 'Y Axis' }
-            });
+
+            Plotly.newPlot(
+                plotArea, 
+                [plotData], 
+                plotLayout
+            );
         }
     </script>
 </body>

@@ -28,10 +28,18 @@ function parseJTLFile(fileContents) {
 
         // Extract timeStamp and elapsed values
         const timeStamp = parseInt(fields[0]);
-        const elapsed = parseFloat(fields[1]);
+        const elapsed = parseFloat(fields[1]) / 1000;
 
         // Add the parsed data to the array
-        data.push({ timeStamp: timeStamp, elapsed: elapsed });
+        // Check if timeStamp and elapsed are valid numbers
+        if (!isNaN(timeStamp) && !isNaN(elapsed)) {
+            // Convert timeStamp to readable format (yyyy/mm/dd hh:mm:ss)
+            const date = new Date(timeStamp);
+            const formattedDate = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+            
+            // Add the parsed data to the array
+            data.push({ timeStamp: formattedDate, elapsed: elapsed });
+        }
     }
 
     // Return the parsed data

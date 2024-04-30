@@ -52,18 +52,17 @@ app.post('/upload', (req, res) => {
                         newFilename = originalFilename;
                         // Now newFilename matches originalFilename
                         console.log('File uploaded successfully');
-                        // res.writeHead(200, { 'Content-Type': 'text/plain' });
-                        // res.write('File uploaded successfully');
-                        // res.end();
                         // Read the contents of the uploads directory
                         fs.readdir(form.uploadDir, (err, files) => {
                             if (err) {
                                 console.error('Error reading directory:', err);
-                                return res.status(500).send({ error: 'Internal Server Error' });
+                                return res.status(500).send('Internal Server Error');
                             }
                             // Send the list of uploaded files to the client as JSON
                             console.log(files);
-                            res.status(200).json({ files: files });
+                            res.setHeader('Content-Type', 'application/json');
+                            res.status(200).send(JSON.stringify({ files: files }));
+                            // res.status(200).json({ files: files });
                         });
                     }
                 });
@@ -97,16 +96,26 @@ app.get('/file/:filename', async (req, res) => {
     
     try {
         // Read and parse JTL file
+        console.log('...READING JTL FILE');
         const data = await readJTLFile(filepath);
+        console.log('...COMPLETED JTL FILE');
 
         // Process data and create scatter plot
-        const plot = await createScatterPlot(data);
+        console.log('...PROCESSING DATA FOR SCATTER PLOT');
+        const { plot, layout } = await createScatterPlot(data);
+        console.log(plot);
+        console.log(layout);
+        console.log('...COMPLETED DATA FOR SCATTER PLOT');
 
-        // Send scatter plot data to the client
-        res.json({ plot: plot });
+        console.log('...PASSING DATA TO CLIENT');
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify({ plot: plot, layout: layout }));
+        console.log('...COMPLETED PASSING DATA TO CLIENT');
+        // Send plot data and layout as JSON response
+        // res.json({ plot: plot, layout: layout });
     } catch (error) {
-        console.error('Error processing file:', error);
-        res.status(500).send('Internal Server Error');
+        console.error('SERVER :: Error processing file:', error);
+        res.status(500).send('SERVER :: Internal Server Error');
     }
 });
 
