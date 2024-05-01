@@ -5,22 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="styles.css">
     <title>My Charts</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.31.1.min.js" charset="utf-8"></script>
 </head>
 <body>
-    <h1>Charts</h1>
-    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" id="fileInput" name="file" accept=".jtl, .csv, .txt" name="filepath" required>
-        <button type="submit">Upload</button>
-    </form>
-    <br>
-    <div>Select a File
-        <select id="fileDropdown">
-            <option value="">Select a file</option>
-        </select>
-        <button id="processFileBtn">Process File</button>
+    <!-- Container for left and right sections -->
+    <div class="container">
+        <!-- Left section for form and dropdown -->
+        <div class="left">
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                <input type="file" id="fileInput" name="file" accept=".jtl, .csv, .txt" name="filepath" required>
+                <button type="submit">Upload</button>
+            </form>
+            <br>
+            <div>Select a File
+                <select id="fileDropdown">
+                    <option value="">Select a file</option>
+                </select>
+                <button id="processFileBtn">Process File</button>
+            </div>
+        </div>
+        <!-- Right section for plot area -->
+        <div class="chart-container" id="plotArea"></div>
     </div>
-    <div id="plotArea"></div>
 
     <script>
         // EVENTS          // Call fetchFiles() function when the page loads
@@ -172,11 +178,13 @@
         }
         
         function displayPlot(plotData, plotLayout) {
+            // console.log('Plot data:', plotData);
+            // console.log('Plot layout:', plotLayout);
             const plotArea = document.getElementById('plotArea');
 
             Plotly.newPlot(
                 plotArea, 
-                [plotData], 
+                plotData, 
                 plotLayout
             );
         }

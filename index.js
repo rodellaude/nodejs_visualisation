@@ -103,7 +103,7 @@ app.get('/file/:filename', async (req, res) => {
         // Process data and create scatter plot
         console.log('...PROCESSING DATA FOR SCATTER PLOT');
         const { plot, layout } = await createScatterPlot(data);
-        console.log(plot);
+        // console.log(plot);
         console.log(layout);
         console.log('...COMPLETED DATA FOR SCATTER PLOT');
 

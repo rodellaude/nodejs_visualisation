@@ -1,7 +1,47 @@
 button {
     background-color: lightblue;
     color: black;
+    font-family: Georgia, sans-serif;
+    font-size: 10px;
 }
+
 label {
     margin-right: 10px; /* Adjust the value as needed */
+}
+
+body {
+    font-family: Georgia, sans-serif;
+    font-size: 10px;
+    color: #333; /* Dark gray color */
+}
+
+select {
+    font-family: Georgia, sans-serif;
+    font-size: 10px;
+}
+
+input {
+    font-family: Georgia, sans-serif;
+    font-size: 10px;
+}
+
+.container {
+    display: flex;
+    flex-direction: row; /* Arrange items horizontally */
+}
+
+.left {
+    flex: 1; /* Occupy 30% of the container */
+    padding: 10px;
+}
+
+.right {
+    flex: 3; /* Occupy 70% of the container */
+    padding: 10px;
+}
+
+.chart-container {
+    border: 1px solid black; /* Add border around the chart area */
+    /* padding: 10px; Add some padding to separate the border from the chart */
+    float: left; /* Align the chart container to the left */
 }
